@@ -1,0 +1,30 @@
+{
+  "name": "fullstack_open_part3",
+  "version": "1.0.0",
+  "description": "Exercises from Part 3",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "start": "node index.js",
+    "type": "git",
+    "url": "git+https://github.com/zacsolo/FullStack_Open_Part3.git"
+  },
+  "author": "Zac Solomon",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zacsolo/FullStack_Open_Part3/issues"
+  },
+  "homepage": "https://github.com/zacsolo/FullStack_Open_Part3#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "morgan": "^1.10.0"
+  }
+}
