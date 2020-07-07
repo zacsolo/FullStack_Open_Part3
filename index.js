@@ -1,14 +1,17 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
-const { response } = require('express');
 const cors = require('cors');
+const bodyParser = require('body-parser');
+const Person = require('./models/people');
 
+app.use(bodyParser.json());
 app.use(cors());
-app.use(express.json());
+// app.use(express.json());
 app.use(express.static('build'));
 
-//-----LOL THIS WAS NOT STRAIGHT FOWARD-----
+// -- FOR PRINTING TO CONSOLE
 morgan.token('content', function (req, res) {
   return JSON.stringify(req.body);
 });
@@ -17,69 +20,91 @@ app.use(
     ':method :url :status :res[content-length] - :response-time ms :content'
   )
 );
-//-----LOL THIS WAS NOT STRAIGHT FOWARD-----
-
-let persons = [
-  { name: 'Arto Hellas', number: '040-29182', id: 1 },
-  { name: 'Ada Lovelace', number: '980-00012', id: 2 },
-  { name: 'Dan Abramov', number: '873-21112', id: 3 },
-  { name: 'Mary Poppendieck', number: '712-98701', id: 4 },
-];
-
-app.get('/info', (request, response) => {
-  const newDate = new Date();
-  response.send(`Phonebook has info for ${persons.length} people, ${newDate}`);
-});
+// -- FOR PRINTING TO CONSOLE
 
 app.get('/api/persons', (request, response) => {
-  response.json(persons);
+  Person.find({}).then((notes) => {
+    response.json(notes);
+  });
+});
+app.get('/api/persons/:id', (request, response, next) => {
+  Person.findById(request.params.id)
+    .then((item) => {
+      if (item) {
+        response.json(item);
+      } else {
+        response.status(404).end();
+      }
+    })
+    .catch((error) => next(error));
 });
 
-app.get('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id);
-  const person = persons.find((p) => p.id === id);
-  if (!person) {
-    response.status(404).end();
-  }
-  response.json(person);
-});
-
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const body = request.body;
-  const newId = Math.floor(Math.random() * 999999);
-  const nameMatch = persons.find((p) => p.name === body.name);
 
-  if (!body.name || !body.number) {
-    return response.status(400).json({
-      error: 'must have a name and number',
-    });
-  }
-  if (nameMatch) {
-    return response.status(400).json({
-      error: 'name must be unique',
-    });
-  }
-
-  const newPerson = {
+  const newPerson = new Person({
     name: body.name,
     number: body.number,
-    id: newId,
-    date: new Date(),
+  });
+
+  newPerson
+    .save()
+    .then((item) => item.toJSON())
+    .then((formattedItem) => {
+      response.json(formattedItem);
+    })
+    .catch((error) => next(error));
+});
+
+//--UPDATE A NUMBER
+app.put('/api/persons/:id', (request, response, next) => {
+  const body = request.body;
+
+  const person = {
+    name: body.name,
+    number: body.number,
   };
 
-  persons = persons.concat(newPerson);
-
-  response.json(newPerson);
+  Person.findByIdAndUpdate(request.body.id, person, { new: true })
+    .then((updatedNote) => {
+      response.json(updatedNote);
+    })
+    .catch((error) => next(error));
 });
 
-app.delete('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id);
-  persons = persons.filter((p) => p.id !== id);
-
-  response.status(204).end();
+app.delete('/api/persons/:id', (request, response, next) => {
+  Person.findByIdAndRemove(request.params.id)
+    .then((result) => {
+      response.status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
-const PORT = process.env.PORT || 3000;
+//--------------------
+//--ERROR HANDLING FOR UNKNOWN ROUTES
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' });
+};
+app.use(unknownEndpoint);
+
+//--------------------
+//--ALL OTHER ERRORS
+const errorHandler = (error, request, response, next) => {
+  console.log('IN ERROR HANDLER, NAME', error);
+  console.error('IN ERROR HANDLER, NAME', error.name);
+  console.error('IN ERROR HANDLER, MESSAGE', error.message);
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' });
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message });
+  }
+
+  next(error);
+};
+app.use(errorHandler);
+
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
