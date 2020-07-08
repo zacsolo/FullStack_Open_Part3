@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.static('build'));
 
 // -- FOR PRINTING TO CONSOLE
-morgan.token('content', function (req, res) {
+morgan.token('content', function (req) {
   return JSON.stringify(req.body);
 });
 app.use(
@@ -74,7 +74,7 @@ app.put('/api/persons/:id', (request, response, next) => {
 
 app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndRemove(request.params.id)
-    .then((result) => {
+    .then(() => {
       response.status(204).end();
     })
     .catch((error) => next(error));

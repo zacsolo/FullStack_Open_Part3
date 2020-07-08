@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/zacsolo/FullStack_Open_Part3#readme",
   "devDependencies": {
+    "eslint": "^7.4.0",
     "nodemon": "^2.0.4"
   },
   "dependencies": {
